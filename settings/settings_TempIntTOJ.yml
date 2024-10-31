@@ -1,0 +1,70 @@
+preferences:
+  general:
+    audioLib: PTB
+    audioDevice: 'HDA Intel PCH: ALC262 Analog (hw:0,0)' # activate this setting in psychophysics room
+    units: deg
+  hardware:
+    audioLatencyMode: 4 
+
+window:
+    size: [1920, 1080]
+    pos: [0, 0]
+    color: [0, 0, 0]
+    fullscr: True
+    winType: pyglet
+    waitBlanking: True
+    screen: 1
+
+monitor:
+    name: default
+    width: 69.8  # in cm
+    distance: 196  # in cm
+    gamma: 2.1 # activate this setting for BOLD screen!
+    
+mouse:
+  visible: False
+
+eyetracker:
+  address: '100.1.1.1'
+  dot_size: 0.1  # in deg
+  options:
+    active_eye: left  # [right]
+    binocular_enabled: NO  # [YES]
+    heuristic_filter: 2  # [0, OFF, 1, ON]
+    pupil_size_diameter: YES  # [NO]
+    #simulate_head_camera: NO  # [YES]  # GIVES ERROR?
+    #simulation_screen_distance
+    file_event_filter: 'LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT'
+    link_event_filter: 'LEFT,RIGHT,FIXATION,SACCADE,BLINK,BUTTON'
+    link_sample_data: 'LEFT,RIGHT,GAZE,GAZERES,AREA,STATUS,HTARGET'
+    #file_sample_data: LEFT,RIGHT,GAZE,AREA,GAZERES,STATUS,HTARGET,INPUT'  # GIVES ERROR?
+    calibration_type: HV9  # [H3, HV3, HV5, HV9]
+    x_gaze_constraint: AUTO
+    y_gaze_constraint: AUTO
+    enable_automatic_calibration: YES  # [NO]
+    automatic_calibration_pacing: 1000
+    enable_search_limits: YES
+    track_search_limits: YES
+    autothreshold_click: YES
+    autothreshold_repeat: YES
+    enable_camera_position_detect: YES
+    sample_rate: 1000
+
+stimuli:
+    tex_type: 'snakes-new'  
+    screenshot: False
+    stim_conds: ['AV', 'VA'] #['AV', 'VA']  # stimulus conditions 
+    n_repeats_per_block: 6 # repetitions of indiv. conditions x SOAs per block
+    n_blocks: 3
+    stim_onset_asynch: [4, 12, 24, 36, 64, 128]  # new TOJ2 favorite, not taking notably longer (18 f * 16 = 2 secs or sth)
+    stim_dur_vis: 3 # in frames, 4 frames is 33 ms, visual needs to be set to 3 for 4 frames in psychophys room
+    stim_dur_aud: 4 # in frames, 4 frames is 33 ms
+    n_preschedule: 1
+    randomization: 'cond'
+
+task:
+    type: 'TOJ' # ['TOJ', 'SJ'] type of task, temporal order judgement or synchrony judgement
+    confidence: True
+    response_keys: ['2', '4'] # [audio first, video first]   
+    confidence_response_keys: ['3', '1'] # [low, high] confidence
+    advance_directly: True

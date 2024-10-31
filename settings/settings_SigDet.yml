@@ -1,0 +1,79 @@
+preferences:
+  general:
+    audioLib: sounddevice
+    units: deg
+
+window:
+  screen: 1
+  size: [1920, 1080] #[1280, 720]
+  pos: [0, 0]
+  color: [0, 0, 0]
+  fullscr: True
+  winType: pyglet
+  waitBlanking: True
+
+monitor:
+  name: default
+  # width: 53  # in cm
+  # distance: 65  # in cm
+  width: 69.8  # in cm
+  distance: 196  # in cm
+  gamma: 2.1
+  # gamma: 1
+
+
+response:
+  device: 'button_box' # 'keyboard' or 'button_box'
+  metacognition: 'split' # 'split' or 'together'
+  advance_directly: True
+
+eyetracker:
+  address: '100.1.1.1'
+  dot_size: 0.1  # in deg
+  options:
+    active_eye: left  # [right]
+    binocular_enabled: NO  # [YES]
+    heuristic_filter: 2  # [0, OFF, 1, ON]
+    pupil_size_diameter: YES  # [NO]
+    #simulate_head_camera: NO  # [YES]  # GIVES ERROR?
+    #simulation_screen_distance
+    file_event_filter: 'LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT'
+    link_event_filter: 'LEFT,RIGHT,FIXATION,SACCADE,BLINK,BUTTON'
+    link_sample_data: 'LEFT,RIGHT,GAZE,GAZERES,AREA,STATUS,HTARGET'
+    # file_sample_data: LEFT,RIGHT,GAZE,AREA,GAZERES,STATUS,HTARGET,INPUT'  # GIVES ERROR?
+    calibration_type: HV9  # [H3, HV3, HV5, HV9]
+    x_gaze_constraint: AUTO
+    y_gaze_constraint: AUTO
+    enable_automatic_calibration: YES  # [NO]
+    automatic_calibration_pacing: 1000
+    enable_search_limits: YES
+    track_search_limits: YES
+    autothreshold_click: YES
+    autothreshold_repeat: YES
+    enable_camera_position_detect: YES
+    sample_rate: 1000
+
+
+stimuli:
+  screenshot: False                   #
+  n_noise_textures: 25
+  signal_parameters:
+    contrast: 0.8
+    spatial_freq: 3 # in cycles per dva
+    # size: 17 # currently unused
+    size: 1024 # in pixels
+    # 7 equidistant between .01 and .03, where we expect most of the slope
+    # still keeping hard trial at .005 and easy trials at .05 and .04, but sacrificing in-between values .035 and .045
+    # signals: [0.005, 0.01, 0.01333333, 0.01666667, 0.02, 0.02333333, 0.02666667, 0.03, 0.04, 0.05] # signals in psychopy opacity
+    signals: [0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05] # original signals in psychopy opacity
+  noise_parameters:
+    refresh_frame: 8
+    contrast: 0.35
+    opacity: 0.5
+    size: 19 # currently unused
+
+task:
+  tutorial: False
+  n_repeats_block: 5 # repeats per present-condition per block
+  ratio_absent_present: 1 # how many absent conditions per present condition 
+  n_blocks: 4 # number of blocks

@@ -1,0 +1,110 @@
+preferences:
+  general:
+    audioLib: sounddevice
+    units: deg
+
+# window:
+#   size: [1440, 900]
+#   pos: [0, 0]
+#   color: [0, 0, 0]
+#   fullscr: True
+#   #winType: pyglet
+#   waitBlanking: True
+#   screen: 1
+
+# monitor:
+#   name: default
+#   width: 50  # in cm
+#   distance: 80  # in cm
+#   gamma: 1
+
+window:
+    size: [1920, 1080]
+    pos: [0, 0]
+    color: [0, 0, 0]
+    fullscr: False
+    winType: pyglet
+    waitBlanking: True
+    screen: 0
+
+monitor:
+    name: default
+    width: 69.8  # in cm
+    distance: 196  # in cm
+    # gamma: 2.1 # activate this setting for BOLD screen!
+    gamma: 1
+
+
+mouse:
+  visible: False
+
+eyetracker:
+  address: '100.1.1.1'
+  dot_size: 0.1  # in deg
+  options:
+    active_eye: left  # [right]
+    binocular_enabled: NO  # [YES]
+    heuristic_filter: 2  # [0, OFF, 1, ON]
+    pupil_size_diameter: YES  # [NO]
+    #simulate_head_camera: NO  # [YES]  # GIVES ERROR?
+    #simulation_screen_distance
+    file_event_filter: 'LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT'
+    link_event_filter: 'LEFT,RIGHT,FIXATION,SACCADE,BLINK,BUTTON'
+    link_sample_data: 'LEFT,RIGHT,GAZE,GAZERES,AREA,STATUS,HTARGET'
+    #file_sample_data: LEFT,RIGHT,GAZE,AREA,GAZERES,STATUS,HTARGET,INPUT'  # GIVES ERROR?
+    calibration_type: HV5  # [H3, HV3, HV5, HV9]
+    x_gaze_constraint: AUTO
+    y_gaze_constraint: AUTO
+    enable_automatic_calibration: YES  # [NO]
+    automatic_calibration_pacing: 1000
+    enable_search_limits: YES
+    track_search_limits: YES
+    autothreshold_click: YES
+    autothreshold_repeat: YES
+    enable_camera_position_detect: YES
+    sample_rate: 1000
+    calibration_area_proportion: 0.4 0.4 # for scanner, make dots closer to center
+    validation_area_proportion: 0.4 0.4
+
+mri:
+  simulate: False
+  TR: 1.6 #1.32  # seconds between volume acquisitions
+  TA: 1.6  # seconds to acquire one volume
+  volumes: 100  # number of 3D volumes to obtain in a given scanning run
+  sync: t  # character used as flag for sync timing, default=‘5’
+  skip: 0  # how many frames to silently omit initially during T1 stabilization, no sync pulse.
+  sound: False  # simulate scanner noise
+  topup_scan: True
+  topup_duration: 45 #45 # topup scan duration in seconds (no 't's)
+
+# times in frames based on 120 FPS screen
+stimuli:
+    # runs 1, 3, 5, 7, 9, ...
+    # trial_sequence: 'trial_sequences/d_const_b_14_s_107/trial_sequence_c000.csv'
+    # runs 2, 4, 6, 8, 10, ...
+    trial_sequence: 'trial_sequences/tr-200_min-3_tsearch-12/tr-200_min-3_tsearch-12_002.csv'
+    # test
+    # trial_sequence: 'trial_sequences/test/trial_sequence_s000_short.csv'
+    # tex_type: 'minmax'                     # either of ['rms', 'minmax'], determines the rescaling used
+    tex_type: 'snakes-new/density-4'
+    scanner_sync: True                 # set this to true to make phase p0 (prep) end on input 't', overrides default TR/2
+    #screenshot: True                   # TODO implement
+    stim_types: ['dur', 'isi']         # stimulus types, ['dur', 'isi']
+    stim_conds: [0, 2, 4, 8, 16, 32, 64] # stimulus condition in frames, interpreted as either stimulus duration ('dur' trials) or isi ('isi' trials) 
+    fixed_duration: 16                 # fixed duration for ISI trials
+    stim_duration: 96                  # total duration of the stimulus presentation in frames ()
+    iti_durations: 0                   # TODO [0, 1, 2, 3] for indexing the iti df or ['const']
+    iti_const: 120                     # if const, this will be the amount of TRs an iti will take 
+    triggerless_trs: 5                  # (curently not used, but commented out) how many TRs are taken without a trigger, if start_at_syn == 6 then this is 5 
+    blank_before_trs: 11                # how many TRs of blank before the task starts properly; 13*TR = 17.16s
+    blank_after_trs: 15                 # how many TRs of blank after the task has finished; 18*TR = 23.76s
+    # stimulus offsets to correct for bold screen
+    x_offset: 0.0 # pos r, neg l
+    y_offset: -1 # pos up, neg down
+
+# times in seconds
+task: 
+    response interval: 0.8             # time in s you allow the participant to respond that still counts as correct response
+    color switch interval: 5 #3.5         # interval in s between color dot switches, note: a random decimal between -1 and +1 is added to it in the code 
+    fix_dot_size: .5                 # fixation dot size in degrees. Dot changes color on average every two TRs (or bar steps)
+    fix_dot_colors: ['green', 'red']   # fixation dot colors

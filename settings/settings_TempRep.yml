@@ -1,0 +1,60 @@
+preferences:
+  general:
+    audioLib: sounddevice
+    units: deg
+
+window:
+    size: [1920, 1080]
+    pos: [0, 0]
+    color: [0, 0, 0]
+    fullscr: True
+    winType: pyglet
+    waitBlanking: True
+    screen: 1
+
+monitor:
+    name: default
+    width: 69.8  # in cm
+    distance: 196  # in cm
+    gamma: 2.1 # activate this setting for BOLD screen!
+    # gamma: 1
+
+mouse:
+  visible: False
+
+eyetracker:
+  address: '100.1.1.1'
+  dot_size: 0.1  # in deg
+  options:
+    active_eye: left  # [right]
+    binocular_enabled: NO  # [YES]
+    heuristic_filter: 2  # [0, OFF, 1, ON]
+    pupil_size_diameter: YES  # [NO]
+    #simulate_head_camera: NO  # [YES]  # GIVES ERROR?
+    #simulation_screen_distance
+    file_event_filter: 'LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON,INPUT'
+    link_event_filter: 'LEFT,RIGHT,FIXATION,SACCADE,BLINK,BUTTON'
+    link_sample_data: 'LEFT,RIGHT,GAZE,GAZERES,AREA,STATUS,HTARGET'
+    #file_sample_data: LEFT,RIGHT,GAZE,AREA,GAZERES,STATUS,HTARGET,INPUT'  # GIVES ERROR?
+    calibration_type: HV9  # [H3, HV3, HV5, HV9]
+    x_gaze_constraint: AUTO
+    y_gaze_constraint: AUTO
+    enable_automatic_calibration: YES  # [NO]
+    automatic_calibration_pacing: 1000
+    enable_search_limits: YES
+    track_search_limits: YES
+    autothreshold_click: YES
+    autothreshold_repeat: YES
+    enable_camera_position_detect: YES
+    sample_rate: 1000
+
+
+# times in frames based on 120 FPS screen
+stimuli:
+    tex_type: 'snakes-new'                     # either of ['rms', 'minmax', 'snakes-new'], determines the rescaling used
+    screenshot: False                   #
+    stim_conds: [16, 32, 64, 128, 256, 512] # stimulus condition in frames, interpreted as either stimulus duration ('dur' trials) or isi ('isi' trials)
+    n_repeats: 6 # repetitions of indiv. conditions PER BLOCK
+    n_blocks: 3 # total number of blocks
+    show_stim_during_response: True
+    randomization: 'cond'

@@ -9,10 +9,12 @@ from exptools2 import utils
 from psychopy import core
 
 import numpy as np
+from scipy.stats import norm
 import glob
 import random
 import sys
 import os
+import json
 
 class BlockTrial(Trial):
     """
@@ -31,7 +33,7 @@ class BlockTrial(Trial):
         random.shuffle(self.image_idxs)
         self.flicker_speed = self.parameters['flicker_speed']
         self.i = 0
-
+        
         if self.session.debug:
             self.trial_timer = core.Clock()
 
@@ -51,7 +53,7 @@ class BlockTrial(Trial):
                 self.session.flick_timer.reset()
         
         # switch color of fix
-        self.session.switch_fix_color()
+        self.session.switch_fix_color(effective = True)
         # draw fix
         self.session.default_fix.draw()
 
@@ -81,7 +83,19 @@ class BlockTrial(Trial):
 
                 else:
                     event_type = 'response'
-                    # TODO calculate the dt to last fix color switch!
+                    # calculate the dt to last fix color switch
+                    if self.session.last_fix_color_switch is None:
+                        self.session.n_fas += 1
+                    else:
+                        dt = t - self.session.last_fix_color_switch
+                        if dt < self.session.settings['task']['response interval']:
+                            self.session.n_hits += 1
+                        elif dt >= self.session.settings['task']['response interval']:
+                            self.session.n_fas += 1
+
+                    if self.session.debug:
+                        print(f'last switch was {self.session.last_fix_color_switch:.2f}')
+                        print(f'pressed key {key} at {t:.2f}, with dt {dt:.2f}')
 
                 idx = self.session.global_log.shape[0]
                 self.session.global_log.loc[idx, 'trial_nr'] = self.trial_nr
@@ -141,6 +155,8 @@ class BlockSession(PylinkEyetrackerSession):
         self.total_TRs = np.sum(np.array(self.iti_sequence)) + self.blanks_before + self.blanks_after
         print(f'total TRs: {self.total_TRs}')
 
+        self.metadata = {'settings_file' : settings_file,
+                         'eyetracker': eyetracker_on}
 
         # set fix dot params
         self.fix_dot_color_idx = 0
@@ -150,6 +166,11 @@ class BlockSession(PylinkEyetrackerSession):
         self.default_fix.setColor('green') # starting color
         self.total_exp_duration_s = self.total_TRs * self.TR
         self.total_fix_duration = self.total_exp_duration_s
+        self.last_fix_color_switch = None
+        self.effective_fix_color_switches = []
+        self.n_hits = 0
+        self.n_fas = 0
+
         # print(self.total_fix_duration)
         if self.settings['mri']['topup_scan']: 
             self.total_fix_duration += self.settings['mri']['topup_duration']
@@ -164,7 +185,7 @@ class BlockSession(PylinkEyetrackerSession):
                                        opacity = .5) 
         
         # load all images here to avoid excessive memory usage
-        self.texture_paths = glob.glob(f"../textures/{self.settings['stimuli']['tex_type']}/density-{self.settings['stimuli']['snake_density']}/*") # get paths to textures
+        self.texture_paths = glob.glob(f"textures/{self.settings['stimuli']['tex_type']}/density-{self.settings['stimuli']['snake_density']}/*") # get paths to textures
         self.images = [ImageStim(self.win, texture_path,  pos = (0+x_offset,0+y_offset), units = 'deg', #interpolate = False,#size = 10,
                         mask = 'raisedCos', texRes = 256, maskParams = {'fringeWidth':0.2}) for texture_path in self.texture_paths]  # proportion that will be blurred
 
@@ -174,7 +195,7 @@ class BlockSession(PylinkEyetrackerSession):
 
     def create_trials(self, durations=None, timing='seconds'):
         if durations is None:
-            durations = [(1000, self.stim_duration, (iti * self.TR)-(self.TR/2 + self.stim_duration)) for iti in session.iti_sequence]
+            durations = [(1000, self.stim_duration, (iti * self.TR)-(self.TR/2 + self.stim_duration)) for iti in self.iti_sequence]
         
         
             # raise NotImplementedError("None durations are not implemented in this experiment, please provide an iterable of ITI timings")            
@@ -224,17 +245,24 @@ class BlockSession(PylinkEyetrackerSession):
 
         return dot_switch_color_times
     
-    def switch_fix_color(self, atol = 1e-1):
+    def switch_fix_color(self, atol = 1e-1, effective = False):
         """
         change color of default fix
+        effective flag indicates whether switch happens within a trial and is logged
         """
         # print(self.clock.getTime())
-        if np.isclose(self.clock.getTime(), self.fix_dot_color_timings[self.fix_dot_color_idx%len(self.fix_dot_color_timings)], atol = atol):
+        t = self.clock.getTime()
+        if np.isclose(t, self.fix_dot_color_timings[self.fix_dot_color_idx%len(self.fix_dot_color_timings)], atol = atol):
         
             # change color
 #             self.fix_dot_color_idx += 1
             self.default_fix.setColor(self.fix_dot_colors[self.fix_dot_color_idx % len(self.fix_dot_colors)])
             self.fix_dot_color_idx += 1
+            
+            self.last_fix_color_switch = t
+
+            if effective:
+                self.effective_fix_color_switches.append(t)
 
 
     def end_experiment(self):
@@ -329,7 +357,7 @@ class BlockSession(PylinkEyetrackerSession):
             self.fix_dot_color_timings = self._make_fix_dot_color_timings()
             if self.debug:
                 print(f"created fix timings: {list(self.fix_dot_color_timings)}")
-                print(f"created fix timings (s): {[time/120 for time in self.fix_dot_color_timings]}")
+                # print(f"created fix timings (s): {[time/120 for time in self.fix_dot_color_timings]}")
             
             while 't' not in keys:
                 keys = getKeys()
@@ -380,6 +408,39 @@ class BlockSession(PylinkEyetrackerSession):
         self.end_experiment()
 
         self.close()
+    
+    def close(self):
+        super().close()
+        self.metadata['fix_dot_color_timings'] = [timing for timing in self.fix_dot_color_timings]
+        self.metadata['fix_dot_color_timings_effective'] = self.effective_fix_color_switches
+
+        # save metadata
+        json_path = os.path.join(self.output_dir, self.output_str + "_metadata.json")
+        with open(json_path, "w") as json_file:
+            json.dump(self.metadata, json_file, indent=4)
+        
+        # calculate d'
+        # according to https://wise.cgu.edu/wise-tutorials/tutorial-signal-detection-theory/signal-detection-d-defined-2/
+        # confirmed with exercises
+        n = len(self.effective_fix_color_switches)
+        if self.n_fas == 0:
+            # set arbitrary minimum fa_rate to allow d' calculation
+            print("no false alarms, setting fa_rate to 1/n for d' calculation")
+            fa_rate = 1/n
+        else:
+            fa_rate = self.n_fas/n
+        
+        if self.n_hits >= n:
+            # set arbitrary maximum hit_rate to allow d' calculation (also covering the unlikely edge case where hr > n)
+            print(f"perfect hits ({self.n_hits}) on {n} switches, setting hit_rate to (n-1)/n for d' calculation")
+            hit_rate = (n-1)/n
+        else:
+            hit_rate = self.n_hits/n
+        
+        d_prime = norm.ppf(hit_rate) - norm.ppf(fa_rate)
+        print(f'd_prime = {d_prime:.2f}, fa_rate = {fa_rate:.2f}, hit_rate = {hit_rate:.2f}')
+
+    
 
 if __name__ == '__main__':
 

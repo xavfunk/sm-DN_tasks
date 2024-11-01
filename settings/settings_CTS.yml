@@ -22,17 +22,17 @@ window:
     size: [1920, 1080]
     pos: [0, 0]
     color: [0, 0, 0]
-    fullscr: False
+    fullscr: True
     winType: pyglet
     waitBlanking: True
-    screen: 0
+    screen: 1
 
 monitor:
     name: default
     width: 69.8  # in cm
     distance: 196  # in cm
-    # gamma: 2.1 # activate this setting for BOLD screen!
-    gamma: 1
+    gamma: 2.1 # activate this setting for BOLD screen!
+    # gamma: 1
 
 
 mouse:
@@ -82,7 +82,7 @@ stimuli:
     # runs 1, 3, 5, 7, 9, ...
     # trial_sequence: 'trial_sequences/d_const_b_14_s_107/trial_sequence_c000.csv'
     # runs 2, 4, 6, 8, 10, ...
-    trial_sequence: 'trial_sequences/tr-200_min-3_tsearch-12/tr-200_min-3_tsearch-12_002.csv'
+    trial_sequence: 'trial_sequences/tr-200_min-3_tsearch-12_002.csv'
     # test
     # trial_sequence: 'trial_sequences/test/trial_sequence_s000_short.csv'
     # tex_type: 'minmax'                     # either of ['rms', 'minmax'], determines the rescaling used
@@ -90,12 +90,12 @@ stimuli:
     scanner_sync: True                 # set this to true to make phase p0 (prep) end on input 't', overrides default TR/2
     #screenshot: True                   # TODO implement
     stim_types: ['dur', 'isi']         # stimulus types, ['dur', 'isi']
-    stim_conds: [0, 2, 4, 8, 16, 32, 64] # stimulus condition in frames, interpreted as either stimulus duration ('dur' trials) or isi ('isi' trials) 
+    stim_conds: [0, 2, 4, 8, 16, 32, 64] # stimulus condition in frames, interpreted as either stimulus duration ('dur' trials) or isi ('isi' trials)
     fixed_duration: 16                 # fixed duration for ISI trials
     stim_duration: 96                  # total duration of the stimulus presentation in frames ()
     iti_durations: 0                   # TODO [0, 1, 2, 3] for indexing the iti df or ['const']
-    iti_const: 120                     # if const, this will be the amount of TRs an iti will take 
-    triggerless_trs: 5                  # (curently not used, but commented out) how many TRs are taken without a trigger, if start_at_syn == 6 then this is 5 
+    iti_const: 120                     # if const, this will be the amount of TRs an iti will take
+    triggerless_trs: 5                  # (curently not used, but commented out) how many TRs are taken without a trigger, if start_at_syn == 6 then this is 5
     blank_before_trs: 11                # how many TRs of blank before the task starts properly; 13*TR = 17.16s
     blank_after_trs: 15                 # how many TRs of blank after the task has finished; 18*TR = 23.76s
     # stimulus offsets to correct for bold screen
@@ -103,8 +103,8 @@ stimuli:
     y_offset: -1 # pos up, neg down
 
 # times in seconds
-task: 
+task:
     response interval: 0.8             # time in s you allow the participant to respond that still counts as correct response
-    color switch interval: 5 #3.5         # interval in s between color dot switches, note: a random decimal between -1 and +1 is added to it in the code 
+    color switch interval: 5 #3.5         # interval in s between color dot switches, note: a random decimal between -1 and +1 is added to it in the code
     fix_dot_size: .5                 # fixation dot size in degrees. Dot changes color on average every two TRs (or bar steps)
     fix_dot_colors: ['green', 'red']   # fixation dot colors

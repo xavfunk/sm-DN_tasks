@@ -12,8 +12,8 @@ class DelayedNormTrial(Trial):
     def __init__(self, session, trial_nr, phase_durations, txt = None, **kwargs):
         super().__init__(session, trial_nr, phase_durations, **kwargs)
         
-        # get the 1/f texture
-        self.img = ImageStim(self.session.win, self.parameters['oneOverF_texture_path'], name=self.parameters['oneOverF_texture_path'],#size = 10,
+        # get the texture
+        self.img = ImageStim(self.session.win, self.parameters['texture_path'], name=self.parameters['texture_path'],#size = 10,
          pos = (self.session.settings['stimuli']['x_offset'], self.session.settings['stimuli']['y_offset']),
                              mask = 'raisedCos', maskParams = {'fringeWidth':0.2}) # proportion that will be blurred
         self.check_frames = np.zeros((96, 3))
@@ -46,7 +46,7 @@ class DelayedNormTrial(Trial):
         # only outside phase 1:
         if self.phase != 1:
             # fixation dot color change
-            self.session.switch_fix_color()
+            self.session.switch_fix_color(effective = True)
 
         if self.session.debug:
             # update debug_message
@@ -56,7 +56,6 @@ class DelayedNormTrial(Trial):
             if self.trial_nr == -1:
                 # dummy trial
                 self.session.debug_message.setText(f"running trial {self.trial_nr}, phase {self.phase}, frame {int(self.session.clock.getTime()*120)}, time {round(self.session.clock.getTime(), 2)}\n total frames: {self.phase_durations[2]} total time: {self.phase_durations[2]/120}")
-                
 
             self.session.debug_message.draw()
 
@@ -140,7 +139,20 @@ class DelayedNormTrial(Trial):
 
                 else:
                     event_type = 'response'
-                    # TODO calculate the dt to last fix color switch!
+                    # calculate the dt to last fix color switch
+                    if self.session.last_fix_color_switch is None:
+                        self.session.n_fas += 1
+                    else:
+                        dt = t - self.session.last_fix_color_switch
+                        if dt < self.session.settings['task']['response interval']:
+                            self.session.n_hits += 1
+                        elif dt >= self.session.settings['task']['response interval']:
+                            self.session.n_fas += 1
+
+                    if self.session.debug:
+                        print(f'last switch was {self.session.last_fix_color_switch:.2f}')
+                        print(f'pressed key {key} at {t:.2f}, with dt {dt:.2f}')
+
 
                 idx = self.session.global_log.shape[0]
                 self.session.global_log.loc[idx, 'trial_nr'] = self.trial_nr

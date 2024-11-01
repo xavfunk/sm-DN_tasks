@@ -483,7 +483,7 @@ class TemRepSession(PylinkEyetrackerSession):
         #     print(target_time)
             times.append(self.results[self.results.target_times_f == target_time].response_times_f)
             
-        box_data = np.vstack(times).T
+        # box_data = np.vstack(times).T
         plt.style.use('seaborn-talk')
         fig, axs = plt.subplots(1, 2, figsize = (12,6))
 
@@ -493,7 +493,8 @@ class TemRepSession(PylinkEyetrackerSession):
         ax_range = axs[0].get_xlim()[1] - axs[0].get_xlim()[0]
         widths = ax_range/5
 
-        axs[0].boxplot(box_data[:,:3], positions = unique_response_times[:3], widths = widths,)
+        # axs[0].boxplot(box_data[:,:3], positions = unique_response_times[:3], widths = widths,)
+        axs[0].boxplot(times[:3], positions = unique_response_times[:3], widths = widths,)
 
         axs[0].set_xticks(x_positions)
         axs[0].set_yticks(x_positions)
@@ -509,7 +510,7 @@ class TemRepSession(PylinkEyetrackerSession):
         ax_range = axs[1].get_xlim()[1] - axs[1].get_xlim()[0]
         widths = ax_range/5
 
-        axs[1].boxplot(box_data[:,3:], positions = unique_response_times[3:], widths = widths)
+        axs[1].boxplot(times[3:], positions = unique_response_times[3:], widths = widths)
 
         axs[1].set_xticks(x_positions)
         axs[1].set_yticks(x_positions)

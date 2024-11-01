@@ -19,9 +19,13 @@ def main():
 
     # eyetracking yes/no
     eyetracker_on=True
-
     if 'no-et' in sys.argv:
         eyetracker_on = False
+
+    # debug yes/no
+    debug=False
+    if 'debug' in sys.argv:
+        debug = True
 
     # generate output string
     output_str = f'sub-{sub}_ses-{ses}_task-{task}_run-{run}_dt-{dt}'
@@ -44,7 +48,7 @@ def main():
 
     # initialize
     session = DelayedNormSession(output_str, output_dir = output_dir, eyetracker_on=eyetracker_on,
-                            n_trials=None, settings_file=settings, photodiode_check = False, debug = False)
+                            n_trials=None, settings_file=settings, photodiode_check = False, debug = debug)
     # create trials
     session.create_trials()
     # run the session

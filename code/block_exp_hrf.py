@@ -423,7 +423,12 @@ class BlockSession(PylinkEyetrackerSession):
         # according to https://wise.cgu.edu/wise-tutorials/tutorial-signal-detection-theory/signal-detection-d-defined-2/
         # confirmed with exercises
         n = len(self.effective_fix_color_switches)
-        if self.n_fas == 0:
+        
+        if self.n_fas >= n:
+            # set arbitrary maximum fa_rate to allow d' calculation (also covering the unlikely edge case where hr > n)
+            print(f"n_fas ({self.n_hits}) on {n} switches, setting fa_rate to (n-1)/n for d' calculation")
+            fa_rate = (n-1)/n
+        elif self.n_fas == 0:
             # set arbitrary minimum fa_rate to allow d' calculation
             print("no false alarms, setting fa_rate to 1/n for d' calculation")
             fa_rate = 1/n
@@ -434,6 +439,10 @@ class BlockSession(PylinkEyetrackerSession):
             # set arbitrary maximum hit_rate to allow d' calculation (also covering the unlikely edge case where hr > n)
             print(f"perfect hits ({self.n_hits}) on {n} switches, setting hit_rate to (n-1)/n for d' calculation")
             hit_rate = (n-1)/n
+        elif self.n_hits == 0:
+            # set arbitrary minimum hit_rate to allow d' calculation
+            print(f"No hits ({self.n_hits}) on {n} switches, setting hit_rate to 1/n for d' calculation")
+            hit_rate = 1/n 
         else:
             hit_rate = self.n_hits/n
         

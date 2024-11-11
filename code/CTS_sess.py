@@ -141,6 +141,7 @@ class DelayedNormSession(PylinkEyetrackerSession):
 
         # get paths to textures
         self.texture_paths = glob.glob(f"textures/{self.settings['stimuli']['tex_type']}/*") # get paths to textures
+
         # read trial_sequence_df for trial parameters
         params = [dict(trial_type = row.type,
                        stim_dur = row.cond_frames, 
@@ -507,9 +508,13 @@ class DelayedNormSession(PylinkEyetrackerSession):
             # set arbitrary maximum hit_rate to allow d' calculation (also covering the unlikely edge case where hr > n)
             print(f"perfect hits ({self.n_hits}) on {n} switches, setting hit_rate to (n-1)/n for d' calculation")
             hit_rate = (n-1)/n
+        elif self.n_hits == 0:
+            # set arbitrary minimum hit_rate to allow d' calculation
+            print(f"No hits ({self.n_hits}) on {n} switches, setting hit_rate to 1/n for d' calculation")
+            hit_rate = 1/n        
         else:
             hit_rate = self.n_hits/n
-        
+
         d_prime = norm.ppf(hit_rate) - norm.ppf(fa_rate)
         print(f'd_prime = {d_prime:.2f}, fa_rate = {fa_rate:.2f}, hit_rate = {hit_rate:.2f}')
 

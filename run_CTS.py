@@ -30,7 +30,7 @@ def main():
     # generate output string
     output_str = f'sub-{sub}_ses-{ses}_task-{task}_run-{run}_dt-{dt}'
     if 'test' in sys.argv:
-       output_dir = f'data/TEST/mri/sub-{sub}/ses-{ses}' # test for now
+        output_dir = f'data/TEST/mri/sub-{sub}/ses-{ses}' # test for now
     else:
         output_dir = f'data/mri/sub-{sub}/ses-{ses}'
 

@@ -50,13 +50,7 @@ class DelayedNormTrial(Trial):
 
         if self.session.debug:
             # update debug_message
-            self.session.debug_message.setText(f"running trial {self.trial_nr}, frame {int(self.session.clock.getTime()*120)}, time {round(self.session.clock.getTime(), 2)}\n total frames: {self.phase_durations[self.phase]} total time: {self.phase_durations[self.phase]/120}")
-            # self.session.debug_message.setText(int((self.session.clock.getTime()*120)))
-            
-            if self.trial_nr == -1:
-                # dummy trial
-                self.session.debug_message.setText(f"running trial {self.trial_nr}, phase {self.phase}, frame {int(self.session.clock.getTime()*120)}, time {round(self.session.clock.getTime(), 2)}\n total frames: {self.phase_durations[2]} total time: {self.phase_durations[2]/120}")
-
+            self.session.debug_message.setText(f"trial {self.trial_nr}, phase {self.phase},\ntime {self.session.clock.getTime():.2f}, phase duration (s) {self.phase_durations[self.phase]/120:.2f}")
             self.session.debug_message.draw()
 
         if self.phase == 0: # we are in phase 0, prep time

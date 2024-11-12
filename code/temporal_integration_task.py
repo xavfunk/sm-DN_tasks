@@ -2,7 +2,7 @@
 from psychopy import prefs
 prefs.hardware['audioLib'] ='PTB'
 prefs.hardware['audioLatencyMode'] = 3
-# prefs.hardware['audioDevice'] ='HDA Intel PCH: ALC262 Analog (hw:0,0)'
+prefs.hardware['audioDevice'] ='HDA Intel PCH: ALC262 Analog (hw:0,0)'
 
 # from psychopy import sound
 
@@ -597,9 +597,9 @@ class TempIntSession(PylinkEyetrackerSession):
         # paths to textures:
         if self.settings['stimuli']['tex_type'] == 'snakes-new':
             # assuming snake density of 4
-            self.texture_paths = list(glob.glob(f"../textures/{self.settings['stimuli']['tex_type']}/density-4/*"))
+            self.texture_paths = list(glob.glob(f"textures/{self.settings['stimuli']['tex_type']}/density-4/*"))
         else:
-            self.texture_paths = list(glob.glob(f"../textures/{self.settings['stimuli']['tex_type']}/*"))
+            self.texture_paths = list(glob.glob(f"textures/{self.settings['stimuli']['tex_type']}/*"))
         # randomize
         random.shuffle(self.texture_paths)
 

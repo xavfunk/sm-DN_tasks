@@ -4,7 +4,7 @@ preferences:
     audioDevice: 'HDA Intel PCH: ALC262 Analog (hw:0,0)' # activate this setting in psychophysics room
     units: deg
   hardware:
-    audioLatencyMode: 4 
+    audioLatencyMode: 4
 
 window:
     size: [1920, 1080]
@@ -20,7 +20,7 @@ monitor:
     width: 69.8  # in cm
     distance: 196  # in cm
     gamma: 2.1 # activate this setting for BOLD screen!
-    
+
 mouse:
   visible: False
 
@@ -51,9 +51,9 @@ eyetracker:
     sample_rate: 1000
 
 stimuli:
-    tex_type: 'snakes-new'  
+    tex_type: 'snakes-new'
     screenshot: False
-    stim_conds: ['AV', 'VA'] #['AV', 'VA']  # stimulus conditions 
+    stim_conds: ['AV', 'VA'] #['AV', 'VA']  # stimulus conditions
     n_repeats_per_block: 6 # repetitions of indiv. conditions x SOAs per block
     n_blocks: 3
     stim_onset_asynch: [4, 12, 24, 36, 64, 128]  # new TOJ2 favorite, not taking notably longer (18 f * 16 = 2 secs or sth)
@@ -65,6 +65,6 @@ stimuli:
 task:
     type: 'TOJ' # ['TOJ', 'SJ'] type of task, temporal order judgement or synchrony judgement
     confidence: True
-    response_keys: ['2', '4'] # [audio first, video first]   
+    response_keys: ['2', '4'] # [audio first, video first]
     confidence_response_keys: ['3', '1'] # [low, high] confidence
     advance_directly: True

@@ -3,20 +3,6 @@ preferences:
     audioLib: sounddevice
     units: deg
 
-# window:
-#   size: [1440, 900]
-#   pos: [0, 0]
-#   color: [0, 0, 0]
-#   fullscr: True
-#   #winType: pyglet
-#   waitBlanking: True
-#   screen: 1
-
-# monitor:
-#   name: default
-#   width: 50  # in cm
-#   distance: 80  # in cm
-#   gamma: 1
 
 window:
     size: [1920, 1080]
@@ -82,7 +68,8 @@ stimuli:
     # runs 1, 3, 5, 7, 9, ...
     # trial_sequence: 'trial_sequences/d_const_b_14_s_107/trial_sequence_c000.csv'
     # runs 2, 4, 6, 8, 10, ...
-    trial_sequence: 'trial_sequences/tr-200_min-3_tsearch-12_002.csv'
+    # trial_sequence: 'trial_sequences/tr-200_min-3_tsearch-12_002.csv'
+    trial_sequence: 'trial_sequences/tr-200_tnullmin-2tr_tsearch-12_001.csv'
     # test
     # trial_sequence: 'trial_sequences/test/trial_sequence_s000_short.csv'
     # tex_type: 'minmax'                     # either of ['rms', 'minmax'], determines the rescaling used

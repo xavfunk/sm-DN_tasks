@@ -3,7 +3,6 @@ preferences:
     audioLib: sounddevice
     units: deg
 
-
 window:
     size: [1920, 1080]
     pos: [0, 0]
@@ -20,7 +19,6 @@ monitor:
     distance: 196  # in cm
     gamma: 2.1 # activate this setting for BOLD screen!
     # gamma: 1
-
 
 mouse:
   visible: False
@@ -76,9 +74,6 @@ stimuli:
     y_offset: -1.0 # pos up, neg down
     ## block settings
     flicker_speed: 134 # 330, 660 [ms]
-    # block_on_length_TR: 9 # [n_TR] of a given on or off block 2D EPI
-    # block_off_length_TR: 9 # [n_TR] of a given on or off block 2D EPI
-    # block_off_length_s: 9 # [n_TR] of a given on or off block 2D EPI
 
     ## change sequence and duration accordingly here
     # iti_sequence: [12, 11, 13, 13, 11, 14, 14, 15, 12, 15]

@@ -44,6 +44,8 @@ class DelayedNormSession(PylinkEyetrackerSession):
 
         # fix dot color and size  
         self.fix_dot_color_idx = 0
+        self.fix_dot_switch_idx = 0
+
         self.fix_dot_colors = ['green', 'red']
         self.default_fix.setSize(self.settings['task']['fix_dot_size'])
         self.default_fix.setColor('green') # starting color
@@ -244,7 +246,7 @@ class DelayedNormSession(PylinkEyetrackerSession):
 
         return
 
-    def _make_fix_dot_color_timings(self, total_time=None):
+    def _make_fix_dot_color_timings(self, total_time=None, round_to = None):
 
         if total_time is None:
             total_time = self.total_fix_duration
@@ -254,6 +256,10 @@ class DelayedNormSession(PylinkEyetrackerSession):
         dot_switch_color_times += (2*np.random.rand(len(dot_switch_color_times))-1) # adding uniform noise [-1, 1] 
         # last one will be total time, ending it all
         dot_switch_color_times[-1] = total_time
+        # round
+        if round_to is not None:
+            dot_switch_color_times = [np.round(time, round_to) for time in dot_switch_color_times]
+
         # transforming to frames 
         # dot_switch_color_times = (dot_switch_color_times*120).astype(int)
 
@@ -277,6 +283,7 @@ class DelayedNormSession(PylinkEyetrackerSession):
         self.exp_start = self.clock.getTime()
         self.clock.reset()  # resets global clock
         self.timer.reset()  # phase-timer
+        self.fix_dot_switch_idx = 0 # reset switch index timer
 
         if self.mri_simulator is not None:
             self.mri_simulator.start()
@@ -304,15 +311,20 @@ class DelayedNormSession(PylinkEyetrackerSession):
         """
         t = self.clock.getTime()
         # if int(t*120) in self.fix_dot_color_timings:
-        if np.isclose(t, self.fix_dot_color_timings[self.fix_dot_color_idx%len(self.fix_dot_color_timings)], atol = atol):
-        
+        if np.round(self.clock.getTime(), 2) in self.fix_dot_color_timings[self.fix_dot_switch_idx:]:
+        # if np.isclose(t, self.fix_dot_color_timings[self.fix_dot_color_idx%len(self.fix_dot_color_timings)], atol = atol):
+
             # change color
             self.fix_dot_color_idx += 1
             self.default_fix.setColor(self.fix_dot_colors[self.fix_dot_color_idx % len(self.fix_dot_colors)])
             
+            # move start index to avoid double switches 
+            self.fix_dot_switch_idx += 1
             self.last_fix_color_switch = t
 
             if effective:
+                # remove to avoid multiple occurences
+                # self.fix_dot_color_timings.remove(t)
                 self.effective_fix_color_switches.append(t)
 
 
@@ -355,7 +367,7 @@ class DelayedNormSession(PylinkEyetrackerSession):
             self.calibrate_eyetracker()
             
             # make fix timings
-            self.fix_dot_color_timings = self._make_fix_dot_color_timings()
+            self.fix_dot_color_timings = self._make_fix_dot_color_timings(round_to = 2)
             if self.debug:
                 print(f"created fix timings: {list(self.fix_dot_color_timings)}")
                 # print(f"created fix timings (s): {[time/120 for time in self.fix_dot_color_timings]}")
@@ -377,11 +389,11 @@ class DelayedNormSession(PylinkEyetrackerSession):
             self.start_recording_eyetracker()
         else:
             # make fix timings
-            self.fix_dot_color_timings = self._make_fix_dot_color_timings()
+            self.fix_dot_color_timings = self._make_fix_dot_color_timings(round_to = 2)
             
             if self.debug:
-                print(f"created fix timings (f): {list(self.fix_dot_color_timings)}")
-                print(f"created fix timings (s): {[time/120 for time in self.fix_dot_color_timings]}")
+                print(f"created fix timings: {list(self.fix_dot_color_timings)}")
+                # print(f"created fix timings (s): {[time/120 for time in self.fix_dot_color_timings]}")
             
             while self.settings['mri']['sync'] not in keys:
                 keys = getKeys()
@@ -497,7 +509,12 @@ class DelayedNormSession(PylinkEyetrackerSession):
         # according to https://wise.cgu.edu/wise-tutorials/tutorial-signal-detection-theory/signal-detection-d-defined-2/
         # confirmed with exercises
         n = len(self.effective_fix_color_switches)
-        if self.n_fas == 0:
+        
+        if self.n_fas >= n:
+            # set arbitrary maximum fa_rate to allow d' calculation (also covering the unlikely edge case where hr > n)
+            print(f"n_fas ({self.n_hits}) on {n} switches, setting fa_rate to (n-1)/n for d' calculation")
+            fa_rate = (n-1)/n
+        elif self.n_fas == 0:
             # set arbitrary minimum fa_rate to allow d' calculation
             print("no false alarms, setting fa_rate to 1/n for d' calculation")
             fa_rate = 1/n
@@ -511,7 +528,7 @@ class DelayedNormSession(PylinkEyetrackerSession):
         elif self.n_hits == 0:
             # set arbitrary minimum hit_rate to allow d' calculation
             print(f"No hits ({self.n_hits}) on {n} switches, setting hit_rate to 1/n for d' calculation")
-            hit_rate = 1/n        
+            hit_rate = 1/n 
         else:
             hit_rate = self.n_hits/n
 

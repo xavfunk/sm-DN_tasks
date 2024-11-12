@@ -42,7 +42,7 @@ class DelayedNormTrial(Trial):
         """ Draws stimuli 
         This is to be used when flipping on every frame
         """
-
+        # print(np.round(self.session.clock.getTime(), 2), np.round(self.session.clock.getTime(), 3))
         # only outside phase 1:
         if self.phase != 1:
             # fixation dot color change

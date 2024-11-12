@@ -42,10 +42,9 @@ from exptools2.core.eyetracker import PylinkEyetrackerSession
 from IPython import embed as shell
 import matplotlib.pyplot as plt
 from PIL import Image
-from utils import quick_fit, gaussian
+# from utils import quick_fit, gaussian
 
 
-settings_file = glob.glob('settings.yml')[0]
 
 # np.random.seed(1)   # NOTE: because of this line all experiments will always be idential in the order of stimuli. Feel free to remove if unwanted.
 
@@ -642,21 +641,19 @@ class DetectTrial(Trial):
 
 class DetectSession(PylinkEyetrackerSession):
 
-    def __init__(self, subject_initials, output_str, index=1,  block=0, eyetracker_on=True):
-        # output_str = os.path.join('detection_data',subject_initials)
-        # super(DetectSession, self).__init__(subject_initials, output_str, settings_file)
-        super(DetectSession, self).__init__(subject_initials, output_str, settings_file, eyetracker_on=eyetracker_on) # initialize parent class
+    def __init__(self, output_str, output_dir, settings_file=None, eyetracker_on=True):
+        super().__init__(output_str, output_dir, settings_file, eyetracker_on=eyetracker_on) # initialize parent class
 
-        self.subject_initials = subject_initials
+        subnr = output_str.split('_')[0].split('-')[1]
+
+        self.subnr = subnr
         self.nr_frames_no_reset = 0
-        self.index = index
-        self.block=block
         # from future exptools2 version, Session init
         self.width_deg = 2 * np.degrees(
             np.arctan(self.monitor.getWidth() / self.monitor.getDistance())
         )
         self.pix_per_deg = self.win.size[0] / self.width_deg
-        self.settings_file = 'settings.yml'
+        self.settings_file = settings_file
         # self.noise_sizePIX = np.round(noise_parameters['size'] * self.pix_per_deg / 2).astype(int) # <= notice division by 2, it's to increase the noise element size to 2 later
 
         self.signal_parameters = self.settings['stimuli']['signal_parameters']
@@ -671,8 +668,8 @@ class DetectSession(PylinkEyetrackerSession):
         self.block_len = (self.n_signals * self.n_repeats_block) + (self.n_signals * self.n_repeats_block * self.ratio_absent_present)
         self.max_trials = self.block_len * self.n_blocks
         
-        print(f"{self.n_signals} signals in repeated {self.n_repeats_block} times per block with {self.n_signals * self.n_repeats_block * self.ratio_absent_present}\
-              absent trials makes a block length of {self.block_len}")
+        print(f"{self.n_signals} signals repeated {self.n_repeats_block} times per block with {self.n_signals * self.n_repeats_block * self.ratio_absent_present}\
+              absent trials makes a block length of {self.block_len}. {self.n_blocks} blocks specified for a total {self.n_blocks * self.block_len} trials.")
 
         self.green_fix = Circle(self.win, radius=.075, edges = 100, lineWidth=0)
         self.green_fix.setColor((0, 128, 0), 'rgb255')
@@ -728,7 +725,7 @@ class DetectSession(PylinkEyetrackerSession):
 
         for i in range(self.n_noise_textures):
 
-            path = f'../textures/binary_noise/binary_noise_id-{str(i).zfill(4)}.bmp'
+            path = f'textures/binary_noise/binary_noise_id-{str(i).zfill(4)}.bmp'
             stim = ImageStim(self.win, image = path,
                             contrast= self.noise_parameters['contrast'], name='noise', units='pix', 
                             mask='raisedCos', #size=(self.noise_sizePIX*2, self.noise_sizePIX*2), 
@@ -744,38 +741,45 @@ class DetectSession(PylinkEyetrackerSession):
 
     def create_yes_no_trials(self):
         """creates trials for yes/no runs"""
-        self.signal_present = np.array([0,1])
-        self.signal_orientation = np.array([0,1])
 
-        unique_trials = len(self.signal_present) * len(self.signal_orientation)
-        self.standard_parameters = {'subject': self.subject_initials, 'block': self.block}
+        ##############
+        # TODO use this in make_trials to make balanced (mini) blocks, clean up deprecated code pertaining to old way 
+        # self.signals = np.array(self.signal_parameters['signals']) 
+        # self.n_signals = len(self.signals)
+        # self.n_repeats_block = self.settings['task']['n_repeats_block']
+        # self.ratio_absent_present = self.settings['task']['ratio_absent_present']
+        # self.n_blocks = self.settings['task']['n_blocks']
+        # self.block_len = (self.n_signals * self.n_repeats_block) + (self.n_signals * self.n_repeats_block * self.ratio_absent_present)
+        # self.max_trials = self.block_len * self.n_blocks
+        
+        # print(f"{self.n_signals} signals repeated {self.n_repeats_block} times per block with {self.n_signals * self.n_repeats_block * self.ratio_absent_present}\
+        #       absent trials makes a block length of {self.block_len}. {self.n_blocks} blocks specified for a total {self.n_blocks * self.block_len} trials.")        
+        # #############
+        
+        # init standard parameters
+        self.standard_parameters = {'subject': self.subnr}
 
         # Amount of signal present trials
         present_trials = self.max_trials/2
-        
-        # Lower and upper contrast limit
-        # lim_low        = .005   #.008
-        # lim_up         = .05    #.080
-        unique_signals = 10     
-
-        signal_repetitions = present_trials/unique_signals
+        # total amount of signal repeats
+        signal_repetitions = present_trials/self.n_signals
 
         if not signal_repetitions == int(signal_repetitions):
             raise ValueError('Signal strengths not balanced')
 
         signal_repetitions = int(signal_repetitions)
 
-        signals = np.array(self.signal_parameters['signals']) 
-        print('Average signal strength: {:.3f}'.format(signals.mean(), 3))
-        print('Unique signals: {}'.format(signals))
-        strong_opacity = .1
+        # print('Average signal strength: {:.3f}'.format(self.signals.mean(), 3))
+        # print('Unique signals: {}'.format(self.signals))
         
+        strong_opacity = .1
+        # stimuli will be held here
         self.stimuli = {}
         self.mask = self.makeRingGaussian(self.signal_parameters['size'],  sd=.35, r=150)[0]
         # print(f"created mask with size {self.mask.shape} and values in range {self.mask.min(), self.mask.max()}")
         
-        for signal_opacity in signals:
-            
+        for signal_opacity in self.signals:
+            # making all stimuli, put them into self.simuli
             tex = self.make_grating(1024, #self.stim_sizePIX
                                     ori = 60, sf = self.signal_parameters['spatial_freq'], unit = 'deg')
             # print(f"created tex with size {tex.shape} and values in range {tex.min(), tex.max()}")
@@ -795,8 +799,6 @@ class DetectSession(PylinkEyetrackerSession):
                                         tex = tex * self.mask, mask='raisedCos', units='pix', size=self.signal_parameters['size'],#self.stim_sizePIX,# sf = self.signal_parameters['spatial_freq'],
                                         color=[1,1,1])
 
-        self.total_duration = 0
-
         self.miniblock_params = []
         # make empty trials
         for empty_trial in range(self.n_signals * self.ratio_absent_present):
@@ -808,7 +810,6 @@ class DetectSession(PylinkEyetrackerSession):
 
             self.miniblock_params.append(params.copy())
 
-        # for ori in range(self.signal_orientation.shape[0]):     # Loop over orientation CW/CCW
         for signal in self.signals:
             # make signal trial 
             # copy params from template
@@ -1096,7 +1097,7 @@ def main(block=0):
     # output folder + string is handled as one by the task 
     output_str = os.path.join(results_folder, output_str)
 
-    ts = DetectSession(output_str=output_str, subject_initials=subject, index=sess, 
+    ts = DetectSession(output_str=output_str, subnr=subject, index=sess, 
                        block=block, eyetracker_on=False)
     # print(ts.settings)
     ts.run()

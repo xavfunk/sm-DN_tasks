@@ -1,6 +1,6 @@
 # imports exptools and psychopy
 from exptools2.core import PylinkEyetrackerSession
-from psychopy.visual import TextStim
+from psychopy.visual import TextStim, Circle
 # from psychopy.sound import Microphone
 from psychopy.event import waitKeys, getKeys
 from psychopy import core
@@ -47,10 +47,12 @@ class DelayedNormSession(PylinkEyetrackerSession):
         self.fix_dot_switch_idx = 0
 
         self.fix_dot_colors = ['green', 'red']
-        self.default_fix.setSize(self.settings['task']['fix_dot_size'])
+        self.default_fix = Circle(self.win, radius=self.settings['task']['fix_dot_size'], edges = 100, lineWidth=0)
+
+        # self.default_fix.setSize(self.settings['task']['fix_dot_size'], units = 'deg')
+        # self.default_fix.setSize(1, units = 'deg')
         self.default_fix.setColor('green') # starting color
-        self.default_fix.setPos((self.settings['stimuli']['x_offset'], self.settings['stimuli']['y_offset'])) # starting color        
-        # self.default_fix.setPos(self.settings['stimuli']['x_offset'],self.settings['stimuli']['y_offset']) # starting color        
+        self.default_fix.setPos((self.settings['stimuli']['x_offset'], self.settings['stimuli']['y_offset']))       
 
         # setting up fixation task duration and timings
         self.total_TRs = self.settings['stimuli']['blank_before_trs'] + np.sum(self.trial_sequence_df.iti_TR) + self.settings['stimuli']['blank_after_trs']
@@ -68,17 +70,14 @@ class DelayedNormSession(PylinkEyetrackerSession):
         if self.settings['mri']['topup_scan']: 
             self.total_fix_duration += self.settings['mri']['topup_duration']
         
-        print(f'total fix duration: {self.total_fix_duration}')
+        # print(f'total fix duration: {self.total_fix_duration}')
 
-        if debug:
-            print(f'total TRs: {self.total_TRs}')
-            print(f'total Exp (s): {self.total_exp_duration_s}')
-            print(f'total Exp (f): {self.total_exp_duration_f}')
-            print(f'total fix (s): {self.total_fix_duration}')
+        print('Set up the task with the following timings:')
+        print(f'total TRs: {self.total_TRs}')
+        print(f'total Exp (s): {self.total_exp_duration_s}')
+        # print(f'total Exp (f): {self.total_exp_duration_f}')
+        print(f'total fix (s): {self.total_fix_duration}')
 
-        # making them in run
-        # self.fix_dot_color_timings = self._make_fix_dot_color_timings()
-        
         # debug flag
         self.debug = True if debug else False
         
@@ -167,29 +166,30 @@ class DelayedNormSession(PylinkEyetrackerSession):
                        phase duration {phase_durations[trial_nr]} and timing: {timing}")
         
         # make a dummy trial at the start
-        dummy = DelayedNormTrial(session=self,
+        dummy_start = DelayedNormTrial(session=self,
                         #   trial_nr=self.n_trials, # sets it to +1 the last trial number
-                          trial_nr='dummy',
+                          trial_nr='dummy_start',
                           phase_durations=(0, 0, int(self.settings['stimuli']['blank_before_trs']* self.TR * 120) - int((self.TR* 120)//2)),
-                          txt='Trial %i: Dummy' % trial_nr,
+                          txt='Trial %i:' % trial_nr,
                           parameters=dict(trial_type = 'dur',
                                             stim_dur = 0, 
                                             texture_path = self.texture_paths[0]),
                           verbose=False,
                           timing=timing)
         
-        # TODO remove if not needed ultimately
-        # dummy_end = DelayedNormTrial(session=self,
-        #             trial_nr=998,
-        #             phase_durations=(0, 0, self.settings['stimuli']['dummy_trial_trs']*240),
-        #             txt='Trial %i: Dummy' % trial_nr,
-        #             parameters=dict(trial_type = 'dur',
-        #                             stim_dur = 0, 
-        #                             texture_path = self.texture_paths[0]),
-        #             verbose=False,
-        #             timing=timing)
+        # make a dummy trial at the end
+        dummy_end = DelayedNormTrial(session=self,
+                        #   trial_nr=self.n_trials, # sets it to +1 the last trial number
+                          trial_nr='dummy_end',
+                          phase_durations=(0, 0, int(self.settings['stimuli']['blank_after_trs']* self.TR * 120)),
+                          txt='Trial %i' % trial_nr,
+                          parameters=dict(trial_type = 'dur',
+                                            stim_dur = 0, 
+                                            texture_path = self.texture_paths[0]),
+                          verbose=False,
+                          timing=timing)
         
-        self.trials = [dummy] + self.trials #+ [dummy_end]
+        self.trials = [dummy_start] + self.trials + [dummy_end]
         # self.trials =  self.trials #+ [dummy_end]
 
 
@@ -323,8 +323,6 @@ class DelayedNormSession(PylinkEyetrackerSession):
             self.last_fix_color_switch = t
 
             if effective:
-                # remove to avoid multiple occurences
-                # self.fix_dot_color_timings.remove(t)
                 self.effective_fix_color_switches.append(t)
 
 
@@ -344,12 +342,12 @@ class DelayedNormSession(PylinkEyetrackerSession):
 
             self.default_fix.draw()
             if self.debug:
-                self.debug_message.setText(f"ending fix, time: {self.clock.getTime(): .2f}, last one: {self.fix_dot_color_timings[-1]/120}\nblank time to do: {self.settings['stimuli']['blank_after_trs'] * self.TR}, topup time to do: {self.settings['mri']['topup_duration']}")
+                self.debug_message.setText(f"ending fix, time: {self.clock.getTime(): .2f}, time left: {self.total_fix_duration - self.clock.getTime(): .2f} last one: {self.fix_dot_color_timings[-1]}\ntopup time: {self.settings['mri']['topup_duration']}")
                 self.debug_message.draw()
 
             self.win.flip()
 
-            if int(self.clock.getTime()*120) > self.fix_dot_color_timings[-1]:
+            if self.clock.getTime() > self.fix_dot_color_timings[-1]:
                 finish_fix_task = False
         
         return
@@ -361,11 +359,11 @@ class DelayedNormSession(PylinkEyetrackerSession):
         # waitKeys(keyList = self.settings['mri'].get('sync', 't'))
         keys = []
         if self.debug:
-            self.debug_message.setText("preparing to run, awaiting trigger")
+            self.debug_message.setText(f"preparing to run, awaiting trigger, time: {self.clock.getTime(): .2f}")
 
         if self.eyetracker_on:
             self.calibrate_eyetracker()
-            
+            self.clock.reset()
             # make fix timings
             self.fix_dot_color_timings = self._make_fix_dot_color_timings(round_to = 2)
             if self.debug:
@@ -380,7 +378,9 @@ class DelayedNormSession(PylinkEyetrackerSession):
                 self.switch_fix_color()
 
                 if self.debug:
+                    self.debug_message.setText(f"preparing to run, awaiting trigger, time: {self.clock.getTime(): .2f}")
                     self.debug_message.draw()
+
                 self.default_fix.draw()
 
                 self.win.flip()
@@ -494,7 +494,7 @@ class DelayedNormSession(PylinkEyetrackerSession):
             photo_data.to_csv('photodiode_test_results/timing_photo_exp_results_{}.csv'.format(current_datetime.strftime("%Y-%m-%d-%H-%M")), index = False)
 
         # self.metadata['fix_dot_color_timings'] = list(self.fix_dot_color_timings)
-        self.metadata['fix_dot_color_timings'] = [int(timing) for timing in self.fix_dot_color_timings]
+        self.metadata['fix_dot_color_timings'] = [timing for timing in self.fix_dot_color_timings]
         self.metadata['fix_dot_color_timings_effective'] = self.effective_fix_color_switches
 
         # save metadata
@@ -510,30 +510,38 @@ class DelayedNormSession(PylinkEyetrackerSession):
         # confirmed with exercises
         n = len(self.effective_fix_color_switches)
         
-        if self.n_fas >= n:
-            # set arbitrary maximum fa_rate to allow d' calculation (also covering the unlikely edge case where hr > n)
-            print(f"n_fas ({self.n_hits}) on {n} switches, setting fa_rate to (n-1)/n for d' calculation")
-            fa_rate = (n-1)/n
-        elif self.n_fas == 0:
-            # set arbitrary minimum fa_rate to allow d' calculation
-            print("no false alarms, setting fa_rate to 1/n for d' calculation")
-            fa_rate = 1/n
+        if n != 0:
+            if self.n_fas >= n:
+                # set arbitrary maximum fa_rate to allow d' calculation (also covering the unlikely edge case where hr > n)
+                print(f"n_fas ({self.n_hits}) on {n} switches, setting fa_rate to (n-1)/n for d' calculation")
+                fa_rate = (n-1)/n
+            elif self.n_fas == 0:
+                # set arbitrary minimum fa_rate to allow d' calculation
+                print("no false alarms, setting fa_rate to 1/n for d' calculation")
+                fa_rate = 1/n
+            else:
+                fa_rate = self.n_fas/n
+            
+            if self.n_hits >= n:
+                # set arbitrary maximum hit_rate to allow d' calculation (also covering the unlikely edge case where hr > n)
+                print(f"perfect hits ({self.n_hits}) on {n} switches, setting hit_rate to (n-1)/n for d' calculation")
+                hit_rate = (n-1)/n
+            elif self.n_hits == 0:
+                # set arbitrary minimum hit_rate to allow d' calculation
+                print(f"No hits ({self.n_hits}) on {n} switches, setting hit_rate to 1/n for d' calculation")
+                hit_rate = 1/n 
+            else:
+                hit_rate = self.n_hits/n
         else:
-            fa_rate = self.n_fas/n
-        
-        if self.n_hits >= n:
-            # set arbitrary maximum hit_rate to allow d' calculation (also covering the unlikely edge case where hr > n)
-            print(f"perfect hits ({self.n_hits}) on {n} switches, setting hit_rate to (n-1)/n for d' calculation")
-            hit_rate = (n-1)/n
-        elif self.n_hits == 0:
-            # set arbitrary minimum hit_rate to allow d' calculation
-            print(f"No hits ({self.n_hits}) on {n} switches, setting hit_rate to 1/n for d' calculation")
-            hit_rate = 1/n 
-        else:
-            hit_rate = self.n_hits/n
+            print('No effective color switches reported. Did the task run?')
+            
+        try:
+            d_prime = norm.ppf(hit_rate) - norm.ppf(fa_rate)
+            print(f'd_prime = {d_prime:.2f}, fa_rate = {fa_rate:.2f}, hit_rate = {hit_rate:.2f}')
+        except Exception as e:
+            print('hit the following exception when trying to calculate d-prime. Something with the task may have gone wrong')
+            print(e)
 
-        d_prime = norm.ppf(hit_rate) - norm.ppf(fa_rate)
-        print(f'd_prime = {d_prime:.2f}, fa_rate = {fa_rate:.2f}, hit_rate = {hit_rate:.2f}')
 
         self.win.close()
         if self.eyetracker_on:

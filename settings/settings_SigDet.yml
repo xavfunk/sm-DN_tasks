@@ -55,6 +55,7 @@ eyetracker:
 
 
 stimuli:
+  dot_size: .05
   screenshot: False                   #
   n_noise_textures: 25
   signal_parameters:
@@ -75,5 +76,5 @@ stimuli:
 task:
   tutorial: False
   n_repeats_block: 5 # repeats per present-condition per block
-  ratio_absent_present: 1 # how many absent conditions per present condition
+  ratio_absent_present: .5 # how many absent conditions per present condition
   n_blocks: 4 # number of blocks

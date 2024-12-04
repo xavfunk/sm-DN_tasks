@@ -51,10 +51,11 @@ eyetracker:
 
 # times in frames based on 120 FPS screen
 stimuli:
+    dot_size: .05 # dot size in dva
     tex_type: 'snakes-new'                     # either of ['rms', 'minmax', 'snakes-new'], determines the rescaling used
     screenshot: False                   #
     stim_conds: [16, 32, 64, 128, 256, 512] # stimulus condition in frames, interpreted as either stimulus duration ('dur' trials) or isi ('isi' trials)
-    n_repeats: 6 # repetitions of indiv. conditions PER BLOCK
+    n_repeats: 8 # repetitions of indiv. conditions PER BLOCK
     n_blocks: 3 # total number of blocks
     show_stim_during_response: True
     randomization: 'cond'

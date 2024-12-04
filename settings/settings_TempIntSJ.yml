@@ -51,6 +51,7 @@ eyetracker:
     sample_rate: 1000
 
 stimuli:
+    dot_size: .05 # dot size in dva
     tex_type: 'snakes-new'
     screenshot: False
     stim_conds: ['AV', 'VA'] #['AV', 'VA']  # stimulus conditions

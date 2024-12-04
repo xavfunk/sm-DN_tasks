@@ -133,6 +133,7 @@ class DelayedNormTrial(Trial):
 
                 else:
                     event_type = 'response'
+                    dt = None
                     # calculate the dt to last fix color switch
                     if self.session.last_fix_color_switch is None:
                         self.session.n_fas += 1
@@ -154,6 +155,8 @@ class DelayedNormTrial(Trial):
                 self.session.global_log.loc[idx, 'event_type'] = event_type
                 self.session.global_log.loc[idx, 'phase'] = self.phase
                 self.session.global_log.loc[idx, 'response'] = key
+                if event_type == 'response':
+                    self.session.global_log.loc[idx, 'dt'] = dt
 
                 # for param, val in self.parameters.items():
                     # self.session.global_log.loc[idx, param] = val

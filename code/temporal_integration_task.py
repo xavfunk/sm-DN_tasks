@@ -37,7 +37,7 @@ class TempIntTrial(Trial):
         super().__init__(session, trial_nr, phase_durations, **kwargs)
         self.txt = TextStim(self.session.win, txt) 
 
-        self.img = ImageStim(self.session.win, self.session.texture_paths[trial_nr%len(self.session.texture_paths)], size = 10,
+        self.img = ImageStim(self.session.win, self.session.texture_paths[trial_nr%len(self.session.texture_paths)], #size = 10,
                              mask = 'raisedCos', maskParams = {'fringeWidth':0.2}) # proportion that will be blurred
         
         self.sound_played = False
@@ -57,10 +57,10 @@ class TempIntTrial(Trial):
         if trial_nr == 0:
             # set intro message
             if self.session.settings['task']['type'] == 'TOJ':
-                self.intro = ImageStim(self.session.win, 'assets/intructions_screen_TempIntTOJ_seperate.png', units='pix', size = [int(1920 * .95), int(1080*.95)])
+                self.intro = ImageStim(self.session.win, 'assets/intructions_screen_TempIntTOJ.png', units='pix', size = [int(1920 * .95), int(1080*.95)])
             
             else:
-                self.intro = ImageStim(self.session.win, 'assets/intructions_screen_TempIntSJ_seperate.png', units='pix', size = [int(1920 * .95), int(1080*.95)])
+                self.intro = ImageStim(self.session.win, 'assets/intructions_screen_TempIntSJ_st.png', units='pix', size = [int(1920 * .95), int(1080*.95)])
 
         elif self.trial_nr % self.session.n_trials_block==0:
             pause_text = f"Great, you did {self.trial_nr} of {self.session.n_trials} trials.\nYou can rest a little now, but try to keep your head stable.\nContinue with any button if you're ready."
@@ -106,7 +106,7 @@ class TempIntTrial(Trial):
 
         if self.phase == 1:
             # jittered blank
-            self.session.default_fix.draw()
+            self.session.white_fix.draw()
             
             if self.session.photodiode_check:
                 self.black_square.draw()
@@ -183,7 +183,7 @@ class TempIntTrial(Trial):
                 raise ValueError(f"The only supported stimulus orders are 'VA' and 'AV'. You requested {self.parameters['order']}")
         
             # always draw default fix
-            self.session.default_fix.draw()
+            self.session.white_fix.draw()
                 
         elif self.phase == 3:
             # response
@@ -203,7 +203,7 @@ class TempIntTrial(Trial):
                     # stop phase directly
                     self.stop_phase()
                 else:
-                    self.session.default_fix.draw()
+                    self.session.white_fix.draw()
                 
             else:
                 self.session.black_fix.draw()
@@ -224,7 +224,7 @@ class TempIntTrial(Trial):
             # confidence feedback
             # if no response, draw black fix, otherwise default
             if self.parameters['confidence_response_given']:
-                self.session.default_fix.draw()
+                self.session.white_fix.draw()
             else:
                 if self.parameters['response_given']:
                     self.session.black_fix.draw()
@@ -245,9 +245,17 @@ class TempIntTrial(Trial):
                 
 
                 if self.phase == 0:
-                    if any(key in events[0] for key in ['1', '2', '3', '4', '5', 'space']):
+                    if self.trial_nr == 0:
+                        # skip tutorial screen with center button or space
+                        if any(key in events[0] for key in ['space', 'return']):
                     
-                        self.stop_phase()
+                            self.stop_phase()
+                    
+                    else:
+                        # skip break screens with any button
+                        if any(key in events[0] for key in ['1', '2', '3', '4', 'space', 'return']):
+                    
+                            self.stop_phase()
 
                 # print(self.phase)
                 if self.phase == 3:
@@ -510,12 +518,15 @@ class TempIntSession(PylinkEyetrackerSession):
         super().__init__(output_str, output_dir=output_dir,
                          settings_file=settings_file, eyetracker_on=eyetracker_on)
         
-        self.green_fix = Circle(self.win, radius=.075, edges = 100, lineWidth=0)
+        dot_size = self.settings['stimuli']['dot_size']
+        self.green_fix = Circle(self.win, radius=dot_size, edges = 100, lineWidth=0)
         self.green_fix.setColor((0, 128, 0), 'rgb255')
-        self.black_fix = Circle(self.win, radius=.075, edges = 100, lineWidth=0)
+        self.black_fix = Circle(self.win, radius=dot_size, edges = 100, lineWidth=0)
         self.black_fix.setColor((0, 0, 0), 'rgb255')
-        self.blue_fix = Circle(self.win, radius=.075, edges = 100, lineWidth=0)
+        self.blue_fix = Circle(self.win, radius=dot_size, edges = 100, lineWidth=0)
         self.blue_fix.setColor((0, 171, 240), 'rgb255')
+        self.white_fix = Circle(self.win, radius=dot_size, edges = 100, lineWidth=0)
+        self.white_fix.setColor((255, 255, 255), 'rgb255')
 
         # get stimulus params
         self.conds = self.settings['stimuli']['stim_conds']
@@ -533,7 +544,7 @@ class TempIntSession(PylinkEyetrackerSession):
             self.green_fix.setSize(5)
             self.black_fix.setSize(5)
             self.blue_fix.setSize(5)
-            self.default_fix.setSize(5)
+            self.white_fix.setSize(5)
         
         try:
             self.conds_tuple.remove(('AV',0)) # removing one of the simultaneous conds, as we only need one
@@ -610,16 +621,7 @@ class TempIntSession(PylinkEyetrackerSession):
 
     def create_trials(self, durations=None, timing='frames'):
         # make trial parameters (AV/VA and SOA)
-        # all_trial_parameters = self.conds_tuple * self.n_repeats
-        # init trial params list
         all_trial_parameters = []
-
-        # fill it up, making sure blocks are balanced TODO balance in 'miniblocks' a n_conditons
-        # for block in range(self.n_blocks):
-        #     # shuffle inplace
-        #     random.shuffle(all_trial_parameters_block)
-        #     # add a copy 
-        #     all_trial_parameters += all_trial_parameters_block
 
         if self.settings['stimuli']['randomization'] == 'block':
             all_trial_parameters_block = self.conds_tuple * self.n_repeats_per_block
@@ -646,9 +648,9 @@ class TempIntSession(PylinkEyetrackerSession):
         p1_durs = [int(jit) for jit in np.random.choice(jits, self.n_trials)]
         p2_durs = [self.stim_dur_aud * 2 + params[-1] for params in all_trial_parameters]
         p3_durs = [3 * 120] * self.n_trials # fixed duration for responses, 144 frames are 1.2 s
-        p4_durs = [30] * self.n_trials # fixed blank for response feedback, 30 frames are 250 ms
+        p4_durs = [36] * self.n_trials # fixed blank for response feedback, 30 frames are 250 ms
         p5_durs = [3 * 120] * self.n_trials # fixed duration for confidence, 144 frames are 1.2 s
-        p6_durs = [30] * self.n_trials # fixed blank for confidence feedback, 30 frames are 250 ms
+        p6_durs = [36] * self.n_trials # fixed blank for confidence feedback, 30 frames are 250 ms
 
         if self.photodiode_check:
             p1_durs = [int(jit) for jit in np.random.choice(jits, self.n_trials)]

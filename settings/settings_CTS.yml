@@ -69,7 +69,7 @@ stimuli:
     # trial_sequence: 'trial_sequences/d_const_b_14_s_107/trial_sequence_c000.csv'
     # runs 2, 4, 6, 8, 10, ...
     # trial_sequence: 'trial_sequences/tr-200_min-3_tsearch-12_002.csv'
-    trial_sequence: 'trial_sequences/tr-200_tnullmin-2tr_tsearch-12_001.csv'
+    trial_sequence: 'trial_sequences/tr-200_tnullmin-2tr_tsearch-20_001.csv'
     # test
     # trial_sequence: 'trial_sequences/test/trial_sequence_s000_short.csv'
     # tex_type: 'minmax'                     # either of ['rms', 'minmax'], determines the rescaling used
@@ -93,5 +93,5 @@ stimuli:
 task:
     response interval: 0.8             # time in s you allow the participant to respond that still counts as correct response
     color switch interval: 5 #3.5         # interval in s between color dot switches, note: a random decimal between -1 and +1 is added to it in the code
-    fix_dot_size: .5                 # fixation dot size in degrees. Dot changes color on average every two TRs (or bar steps)
+    fix_dot_size: .05                 # fixation dot size in degrees. Dot changes color on average every two TRs (or bar steps)
     fix_dot_colors: ['green', 'red']   # fixation dot colors

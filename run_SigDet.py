@@ -47,13 +47,11 @@ def main():
     print(f"eyetracking_on is {eyetracker_on} and run_tutorial is {run_tutorial}")
 
     # initialize TODO
-    session = DetectSession(output_str, output_dir = output_dir, eyetracker_on=eyetracker_on,
-                            n_trials=None, settings_file=settings, photodiode_check = False, debug=False)
-    ts = DetectSession(output_str=output_str, subject_initials=subject, index=sess, 
-                       block=block, eyetracker_on=False)
+    session = DetectSession(output_str, output_dir = output_dir, settings_file=settings,
+                            eyetracker_on=eyetracker_on)
     
     # create trials
-    session.create_trials()
+    session.create_yes_no_trials()
     # run the session
     session.run()
 

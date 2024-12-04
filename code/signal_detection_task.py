@@ -100,7 +100,10 @@ class DetectTrial(Trial):
             # intro_text = f"""You had {perf}% of correct responses and {conf}% trials with high confidence.
             # Press the spacebar to continue."""
 
-            pause_text = f"""Break.\nPress the central button to continue."""
+            # pause_text = f"""Break.\nPress the central button to continue."""
+
+            pause_text = f"Great, you did {self.ID} of {self.session.max_trials} trials.\nYou can rest a little now, but try to keep your head stable.\nContinue with any button if you're ready."
+            self.pause_message = visual.TextStim(self.session.win, pos=[0,0], text= pause_text, color = (1.0, 1.0, 1.0), height=0.5, font='Arial', wrapWidth=850)
 
         else:
             pause_text = ''
@@ -111,7 +114,7 @@ class DetectTrial(Trial):
             if self.session.settings['response']['metacognition'] == 'together':
                 self.intro = ImageStim(self.session.win, 'assets/instructions_screen_SigDet.png', units='pix', size = [int(1920 * .95), int(1080*.95)])
             else:
-                self.intro = ImageStim(self.session.win, 'assets/instructions_screen_SigDet_seperate_top_bottom.png', units='pix', size = [int(1920 * .95), int(1080*.95)])
+                self.intro = ImageStim(self.session.win, 'assets/instructions_screen_SigDet_seperate_final.png', units='pix', size = [int(1920 * .95), int(1080*.95)])
 
 
         # making sure trial 1 is visible for movie
@@ -665,19 +668,21 @@ class DetectSession(PylinkEyetrackerSession):
         self.n_repeats_block = self.settings['task']['n_repeats_block']
         self.ratio_absent_present = self.settings['task']['ratio_absent_present']
         self.n_blocks = self.settings['task']['n_blocks']
-        self.block_len = (self.n_signals * self.n_repeats_block) + (self.n_signals * self.n_repeats_block * self.ratio_absent_present)
+        self.block_len = (self.n_signals * self.n_repeats_block) + int(self.n_signals * self.n_repeats_block * self.ratio_absent_present)
         self.max_trials = self.block_len * self.n_blocks
         
-        print(f"{self.n_signals} signals repeated {self.n_repeats_block} times per block with {self.n_signals * self.n_repeats_block * self.ratio_absent_present}\
+        print(f"{self.n_signals} signals repeated {self.n_repeats_block} times per block with {int(self.n_signals * self.n_repeats_block * self.ratio_absent_present)}\
               absent trials makes a block length of {self.block_len}. {self.n_blocks} blocks specified for a total {self.n_blocks * self.block_len} trials.")
+        
+        dot_size = self.settings['stimuli']['dot_size']
 
-        self.green_fix = Circle(self.win, radius=.075, edges = 100, lineWidth=0)
+        self.green_fix = Circle(self.win, radius=dot_size, edges = 100, lineWidth=0)
         self.green_fix.setColor((0, 128, 0), 'rgb255')
-        self.black_fix = Circle(self.win, radius=.075, edges = 100, lineWidth=0)
+        self.black_fix = Circle(self.win, radius=dot_size, edges = 100, lineWidth=0)
         self.black_fix.setColor((0, 0, 0), 'rgb255')
-        self.white_fix = Circle(self.win, radius=.075, edges = 100, lineWidth=0)
+        self.white_fix = Circle(self.win, radius=dot_size, edges = 100, lineWidth=0)
         self.white_fix.setColor((255, 255, 255), 'rgb255')
-        self.blue_fix = Circle(self.win, radius=.075, edges = 100, lineWidth=0)
+        self.blue_fix = Circle(self.win, radius=dot_size, edges = 100, lineWidth=0)
         self.blue_fix.setColor((0, 171, 240), 'rgb255')
         
         ## for screenshots, make fix bigger
@@ -712,8 +717,8 @@ class DetectSession(PylinkEyetrackerSession):
 
             elif self.settings['response']['metacognition'] == 'split':
                 self.response_button_mapping = {'present' : '2',
-                                                'absent' : '1',
-                                                'high_confidence' : '4',
+                                                'absent' : '4',
+                                                'high_confidence' : '1',
                                                 'low_confidence' : '3'
                                                 }
             else:
@@ -801,7 +806,7 @@ class DetectSession(PylinkEyetrackerSession):
 
         self.miniblock_params = []
         # make empty trials
-        for empty_trial in range(self.n_signals * self.ratio_absent_present):
+        for empty_trial in range(int(self.n_signals * self.ratio_absent_present)):
             # make empty trial
             # copy params from template
             params = self.standard_parameters.copy()
@@ -849,7 +854,7 @@ class DetectSession(PylinkEyetrackerSession):
             self.total_duration += np.array(phase_durs).sum()
 
         self.trial_parameters_and_durs = list(zip(self.trial_parameters, self.durs))
-        print("total duration: %.2f min." % (self.total_duration / 60.0))
+        # print("total duration: %.2f min." % (self.total_duration / 60.0))
 
         # contructing phase names
         if self.settings['response']['metacognition'] == 'together': 
@@ -865,7 +870,7 @@ class DetectSession(PylinkEyetrackerSession):
         self.confidence = []
 
         # Get index of first trials of each block
-        print(self.max_trials)
+        # print(self.max_trials)
         ftib = np.arange(0, self.max_trials, self.block_len)
 
         # Now, loop over all trials (in random order) to initialize the Trial classes. Later we can then just run the pre-initialised 
@@ -942,7 +947,7 @@ class DetectSession(PylinkEyetrackerSession):
                                         session=self,monitor=self.monitor,  ID=-i, phase_names = self.phase_names))
 
             self.Trials2Run = self.tutorial_trials + self.Trials2Run        
-
+        print(f"Made {len(self.Trials2Run)} trials to run")
         print("total duration: %.2f min." % (self.total_duration / 60.0))
 
     def run(self):

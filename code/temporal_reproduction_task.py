@@ -22,7 +22,7 @@ class TemRepTrial(Trial):
         super().__init__(session, trial_nr, phase_durations, **kwargs)
         self.txt = TextStim(self.session.win, txt) 
         # get texture        
-        self.img = ImageStim(self.session.win, self.session.texture_paths[trial_nr%len(self.session.texture_paths)], size = 10,
+        self.img = ImageStim(self.session.win, self.session.texture_paths[trial_nr%len(self.session.texture_paths)], #size = 10,
                              mask = 'raisedCos', maskParams = {'fringeWidth':0.2}) # proportion that will be blurred
         self.logged_response = False # flag for checking if response got logged
         self.missed_response = False # flag for checking if pp pressed response key
@@ -30,7 +30,7 @@ class TemRepTrial(Trial):
         if trial_nr == 0:
             # set intro message
             # intro_text = 'TEST'
-            self.intro = ImageStim(self.session.win, 'assets/intro_text_TempRep.png', units='pix', size = [int(1920 * .95), int(1080*.95)])
+            self.intro = ImageStim(self.session.win, 'assets/intructions_screen_TempRep.png', units='pix', size = [int(1920 * .95), int(1080*.95)])
         elif self.trial_nr % self.session.n_trials_block==0:
             pause_text = f"Great, you did {self.trial_nr} of {self.session.n_trials} trials.\nYou can rest a little now, but try to keep your head stable.\nContinue with any button if you're ready."
             self.pause_message = visual.TextStim(self.session.win, pos=[0,0], text= pause_text, color = (1.0, 1.0, 1.0), height=0.5, font='Arial', wrapWidth=850)
@@ -40,13 +40,15 @@ class TemRepTrial(Trial):
         """ Draws stimuli """
 
         # make movie of a trial or more
-        if (self.trial_nr == 1) and self.session.settings['stimuli']['screenshot']:
-            print('getting Movie frame')
+        # if (self.trial_nr == 1) and self.session.settings['stimuli']['screenshot']:
+        if self.session.settings['stimuli']['screenshot']:
+        
+            # print('getting Movie frame')
             self.session.win.getMovieFrame()
 
         if self.phase == 0:
 
-            self.session.default_fix.draw()
+            self.session.white_fix.draw()
             if self.trial_nr == 0:
                 # first trial, intro screen
                 self.intro.draw()
@@ -54,7 +56,7 @@ class TemRepTrial(Trial):
                 self.session.win.flip()
                 events = self.get_events()
                 if events:
-                    if any(key in events[0] for key in ['1', '2', '3', '4', '5', 'space']):
+                    if any(key in events[0] for key in ['space', 'return']):
                         
                         self.stop_phase()
 
@@ -63,27 +65,27 @@ class TemRepTrial(Trial):
                 self.session.win.flip()
                 events = self.get_events()
                 if events:
-                    if any(key in events[0] for key in ['1', '2', '3', '4', '5', 'space']):
+                    if any(key in events[0] for key in ['1', '2', '3', '4', '5', 'space', 'return']):
                         # break out of phase upon key press to continue
                         self.stop_phase()
         
         elif self.phase == 1:
             # jittered blank
-            self.session.default_fix.draw()
+            self.session.white_fix.draw()
             self.session.win.flip()
             self.get_events()
 
         elif self.phase == 2:
             # show stimulus for some time
             self.img.draw()
-            self.session.default_fix.draw()
+            self.session.white_fix.draw()
             self.session.win.flip()
             self.get_events()
 
         elif self.phase == 3:
             # fixed blank
-            # self.session.default_fix.draw()
-            self.session.default_fix.draw()
+            # self.session.white_fix.draw()
+            self.session.white_fix.draw()
             self.session.win.flip()
             self.get_events()
             event.clearEvents()
@@ -113,7 +115,9 @@ class TemRepTrial(Trial):
                             
                             if self.session.settings['stimuli']['show_stim_during_response']:
                                 
-                                if (self.trial_nr == 1) and self.session.settings['stimuli']['screenshot']:
+                                # if (self.trial_nr == 1) and self.session.settings['stimuli']['screenshot']:
+                                if self.session.settings['stimuli']['screenshot']:
+
                                     self.session.win.getMovieFrame()
                                 # draw stimulus
                                 self.img.draw()
@@ -121,7 +125,7 @@ class TemRepTrial(Trial):
                                 self.session.green_fix.draw()
 
                             else:
-                                self.session.default_fix.draw()
+                                self.session.white_fix.draw()
 
                             # counting frames, helpful for debugging
                             frame_count += 1 
@@ -178,9 +182,10 @@ class TemRepTrial(Trial):
             if self.missed_response == True:
                 self.session.black_fix.draw()
             else:
-                self.session.default_fix.draw()
+                self.session.white_fix.draw()
             
-            if (self.trial_nr == 1) and self.session.settings['stimuli']['screenshot']:
+            # if (self.trial_nr == 1) and self.session.settings['stimuli']['screenshot']:
+            if self.session.settings['stimuli']['screenshot']:
                 self.session.win.getMovieFrame()
 
             # optional: black fix to indicate ITI
@@ -258,17 +263,19 @@ class TemRepSession(PylinkEyetrackerSession):
         self.n_trials = n_trials
         super().__init__(output_str, output_dir=output_dir,
                          settings_file=settings_file, eyetracker_on=eyetracker_on)
-        
-        self.green_fix = Circle(self.win, radius=.075, edges = 100, lineWidth=0)
+        dot_size = self.settings['stimuli']['dot_size']
+        self.green_fix = Circle(self.win, radius=dot_size, edges = 100, lineWidth=0)
         self.green_fix.setColor((0, 128, 0), 'rgb255')
-        self.black_fix = Circle(self.win, radius=.075, edges = 100, lineWidth=0)
+        self.black_fix = Circle(self.win, radius=dot_size, edges = 100, lineWidth=0)
         self.black_fix.setColor((0, 0, 0), 'rgb255')
+        self.white_fix = Circle(self.win, radius=dot_size, edges = 100, lineWidth=0)
+        self.white_fix.setColor((255, 255, 255), 'rgb255')
 
         ## for screenshots, make fix bigger
-        if self.settings['stimuli']['screenshot']:
-            self.green_fix.setSize(5)
-            self.black_fix.setSize(5)
-            self.default_fix.setSize(5)
+        # if self.settings['stimuli']['screenshot']:
+        #     self.green_fix.setSize(5)
+        #     self.black_fix.setSize(5)
+        #     self.white_fix.setSize(5)
 
         # keyboard workaround
         self.key = pyglet.window.key
@@ -326,7 +333,7 @@ class TemRepSession(PylinkEyetrackerSession):
 
         p3_durs = [60] * self.n_trials # 500 ms/60 frames blank
         p4_durs = [int(1.5 * 120)] * self.n_trials #  1.5 seconds to start answer
-        p5_durs = [30] * self.n_trials # response feedback 30 frames = 250 ms
+        p5_durs = [36] * self.n_trials # response feedback 30 frames = 250 ms
         
         # end with a bit of a buffer, 2 seconds
         p5_durs[-1] = 240
@@ -419,8 +426,8 @@ class TemRepSession(PylinkEyetrackerSession):
 
         if self.settings['stimuli']['screenshot']:
             print('saving movie')
-            self.win.saveMovieFrames('movie.tif')
-            # self.win.saveMovieFrames('movie.mp4')
+            # self.win.saveMovieFrames('movie.tif')
+            self.win.saveMovieFrames('movie.mp4')
 
 
         self.win.close()

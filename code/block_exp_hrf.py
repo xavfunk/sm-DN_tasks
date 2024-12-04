@@ -1,7 +1,7 @@
 import os.path as op
 from exptools2.core import PylinkEyetrackerSession
 from exptools2.core import Trial
-from psychopy.visual import TextStim, ImageStim
+from psychopy.visual import TextStim, ImageStim, Circle
 from psychopy.event import waitKeys, getKeys
 from psychopy import event
 
@@ -83,6 +83,7 @@ class BlockTrial(Trial):
 
                 else:
                     event_type = 'response'
+                    dt = None
                     # calculate the dt to last fix color switch
                     if self.session.last_fix_color_switch is None:
                         self.session.n_fas += 1
@@ -103,6 +104,8 @@ class BlockTrial(Trial):
                 self.session.global_log.loc[idx, 'event_type'] = event_type
                 self.session.global_log.loc[idx, 'phase'] = self.phase
                 self.session.global_log.loc[idx, 'response'] = key
+                if event_type == 'response':
+                    self.session.global_log.loc[idx, 'dt'] = dt
 
                 # for param, val in self.parameters.items():
                     # self.session.global_log.loc[idx, param] = val
@@ -133,7 +136,7 @@ class BlockSession(PylinkEyetrackerSession):
     def __init__(self, output_str, output_dir=None, eyetracker_on=True, debug = False, settings_file=None, n_trials=10):
         """ Initializes TestSession object. """
         self.n_trials = n_trials
-        super().__init__(output_str, output_dir=None, settings_file=settings_file, eyetracker_on=eyetracker_on)
+        super().__init__(output_str, output_dir=output_dir, settings_file=settings_file, eyetracker_on=eyetracker_on)
 
         self.clock = core.Clock()
 
@@ -161,7 +164,9 @@ class BlockSession(PylinkEyetrackerSession):
         # set fix dot params
         self.fix_dot_color_idx = 0
         self.fix_dot_colors = ['red', 'green']
-        self.default_fix.setSize(self.settings['task']['fix_dot_size'])
+
+        self.default_fix = Circle(self.win, radius=self.settings['task']['fix_dot_size'], edges = 100, lineWidth=0)
+        # self.default_fix.setSize(self.settings['task']['fix_dot_size'])
         self.default_fix.setPos((0+x_offset, 0+y_offset))
         self.default_fix.setColor('green') # starting color
         self.total_exp_duration_s = self.total_TRs * self.TR
@@ -219,16 +224,25 @@ class BlockSession(PylinkEyetrackerSession):
 
 
         # put a dummy trial at the start, taking as many TRs as blanks before the start
-        dummy = BlockTrial(session=self,
+        dummy_start = BlockTrial(session=self,
                         #   trial_nr=self.n_trials, # sets it to +1 the last trial number
-                          trial_nr='dummy',
+                          trial_nr='dummy_start',
                           phase_durations= (0, 0, (self.TR * self.blanks_before) - self.TR/2),
-                          txt='Trial: Dummy',
+                          txt='Trial: dummy_start',
                           parameters=dict(flicker_speed=self.flicker_speed),
                           verbose=False,
                           timing=timing)
         
-        self.trials = [dummy] + self.trials        
+        dummy_end = BlockTrial(session=self,
+                        #   trial_nr=self.n_trials, # sets it to +1 the last trial number
+                          trial_nr='dummy_end',
+                          phase_durations= (0, 0, (self.TR * self.blanks_after)),
+                          txt='Trial: dummy_end',
+                          parameters=dict(flicker_speed=self.flicker_speed),
+                          verbose=False,
+                          timing=timing)
+        
+        self.trials = [dummy_start] + self.trials + [dummy_end]      
 
     def _make_fix_dot_color_timings(self, total_time=None):
 
@@ -281,12 +295,12 @@ class BlockSession(PylinkEyetrackerSession):
 
             self.default_fix.draw()
             if self.debug:
-                self.debug_message.setText(f"ending fix, time: {self.clock.getTime(): .2f}, last one: {self.fix_dot_color_timings[-1]}\n, topup time to do: {self.settings['mri']['topup_duration']}")
+                self.debug_message.setText(f"ending fix, time: {self.clock.getTime(): .2f}, time left: {self.total_fix_duration - self.clock.getTime(): .2f} last one: {self.fix_dot_color_timings[-1]}\ntopup time: {self.settings['mri']['topup_duration']}")
                 self.debug_message.draw()
 
             self.win.flip()
 
-            if int(self.clock.getTime()) > self.fix_dot_color_timings[-1]:
+            if self.clock.getTime() > self.fix_dot_color_timings[-1]:
                 finish_fix_task = False
         
         return
@@ -347,12 +361,9 @@ class BlockSession(PylinkEyetrackerSession):
         if self.debug:
             self.debug_message.setText(f"preparing to run, awaiting trigger,  time: {self.clock.getTime(): .2f}")
 
-        self.clock.reset() # to allow the color changes to run (TODO needed??)
-        # TODO test with eyetracker
-
         if self.eyetracker_on:
             self.calibrate_eyetracker()
-            
+            self.clock.reset()
             # make fix timings
             self.fix_dot_color_timings = self._make_fix_dot_color_timings()
             if self.debug:
@@ -424,30 +435,38 @@ class BlockSession(PylinkEyetrackerSession):
         # confirmed with exercises
         n = len(self.effective_fix_color_switches)
         
-        if self.n_fas >= n:
-            # set arbitrary maximum fa_rate to allow d' calculation (also covering the unlikely edge case where hr > n)
-            print(f"n_fas ({self.n_hits}) on {n} switches, setting fa_rate to (n-1)/n for d' calculation")
-            fa_rate = (n-1)/n
-        elif self.n_fas == 0:
-            # set arbitrary minimum fa_rate to allow d' calculation
-            print("no false alarms, setting fa_rate to 1/n for d' calculation")
-            fa_rate = 1/n
+        if n != 0:
+            if self.n_fas >= n:
+                # set arbitrary maximum fa_rate to allow d' calculation (also covering the unlikely edge case where hr > n)
+                print(f"n_fas ({self.n_hits}) on {n} switches, setting fa_rate to (n-1)/n for d' calculation")
+                fa_rate = (n-1)/n
+            elif self.n_fas == 0:
+                # set arbitrary minimum fa_rate to allow d' calculation
+                print("no false alarms, setting fa_rate to 1/n for d' calculation")
+                fa_rate = 1/n
+            else:
+                fa_rate = self.n_fas/n
+            
+            if self.n_hits >= n:
+                # set arbitrary maximum hit_rate to allow d' calculation (also covering the unlikely edge case where hr > n)
+                print(f"perfect hits ({self.n_hits}) on {n} switches, setting hit_rate to (n-1)/n for d' calculation")
+                hit_rate = (n-1)/n
+            elif self.n_hits == 0:
+                # set arbitrary minimum hit_rate to allow d' calculation
+                print(f"No hits ({self.n_hits}) on {n} switches, setting hit_rate to 1/n for d' calculation")
+                hit_rate = 1/n 
+            else:
+                hit_rate = self.n_hits/n
         else:
-            fa_rate = self.n_fas/n
-        
-        if self.n_hits >= n:
-            # set arbitrary maximum hit_rate to allow d' calculation (also covering the unlikely edge case where hr > n)
-            print(f"perfect hits ({self.n_hits}) on {n} switches, setting hit_rate to (n-1)/n for d' calculation")
-            hit_rate = (n-1)/n
-        elif self.n_hits == 0:
-            # set arbitrary minimum hit_rate to allow d' calculation
-            print(f"No hits ({self.n_hits}) on {n} switches, setting hit_rate to 1/n for d' calculation")
-            hit_rate = 1/n 
-        else:
-            hit_rate = self.n_hits/n
-        
-        d_prime = norm.ppf(hit_rate) - norm.ppf(fa_rate)
-        print(f'd_prime = {d_prime:.2f}, fa_rate = {fa_rate:.2f}, hit_rate = {hit_rate:.2f}')
+            print('No effective color switches reported. Did the task run?')
+
+        try:
+            d_prime = norm.ppf(hit_rate) - norm.ppf(fa_rate)
+            print(f'd_prime = {d_prime:.2f}, fa_rate = {fa_rate:.2f}, hit_rate = {hit_rate:.2f}')
+        except Exception as e:
+            print('hit the following exception when trying to calculate d-prime. Something with the task may have gone wrong')
+            print(e)
+
 
     
 
